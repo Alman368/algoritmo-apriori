@@ -1,0 +1,21 @@
+DECLARACIÓN DE ORIGINALIDAD
+
+Yo, como autor de este trabajo, declaro que:
+
+1. Este trabajo es original y ha sido realizado completamente por mí.
+
+2. No he copiado ni plagado ningún contenido de fuentes externas sin la debida atribución.
+
+3. Todo el código fuente ha sido desarrollado originalmente para este proyecto específico.
+
+4. Las técnicas y algoritmos utilizados han sido implementados siguiendo las mejores prácticas de programación y análisis de datos.
+
+5. El análisis de datos y las conclusiones extraídas son resultado de mi propio trabajo de investigación.
+
+6. He utilizado únicamente las librerías estándar de Python y las especificadas en las instrucciones del proyecto (pandas, numpy, matplotlib, seaborn, mlxtend).
+
+7. Este trabajo cumple con todos los requisitos especificados en las instrucciones del proyecto de Reglas de Asociación (Algoritmo Apriori).
+
+Por la presente, asumo la completa responsabilidad sobre la originalidad y autenticidad de este trabajo.
+
+Nombre: Mario Marín Hinojosa
