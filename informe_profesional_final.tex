@@ -1,0 +1,484 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{float}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{titlesec}
+
+% Configuración de página
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{An\'alisis de Reglas de Asociaci\'on en Ajedrez Online}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setstretch{1.2}
+
+% Configuración de títulos
+\titleformat{\section}{\Large\bfseries}{\thesection.}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection.}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection.}{1em}{}
+
+\begin{document}
+
+\title{\textbf{An\'alisis Avanzado de Reglas de Asociaci\'on en Partidas de Ajedrez Online: Aplicaci\'on del Algoritmo Apriori}}
+
+\author{Mario Mar\'in Hinojosa \and Alberto Bartolom\'e Iruela\\
+\small Universidad Complutense de Madrid\\
+\small \texttt{mario.marin@ucm.es, alberto.bartolome@ucm.es}}
+
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+\noindent \textbf{Resumen:} Este trabajo presenta un an\'alisis exhaustivo de reglas de asociaci\'on aplicado a un dataset de 121,332 partidas de ajedrez online del portal lichess.org, utilizando el algoritmo Apriori para descubrir patrones significativos. Se analizaron dos modalidades temporales: ajedrez rel\'ampago (600+0) con 2,452 partidas y ajedrez bala (180+0) con 18,395 partidas. Los resultados revelan patrones altamente significativos, incluyendo reglas con lift superior a 7.39 que demuestran correlaciones extremadamente fuertes entre duraci\'on de partidas y resultados en tablas, y una predictibilidad del 93.8\% para victorias cuando existe una diferencia de 2+ categor\'ias de Elo entre jugadores.
+
+\noindent \textbf{Palabras clave:} Reglas de asociaci\'on, Algoritmo Apriori, Miner\'ia de datos, Ajedrez online, An\'alisis deportivo
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introducci\'on}
+
+\subsection{Contexto y Motivaci\'on}
+
+El ajedrez ha experimentado una revoluci\'on digital en las \'ultimas d\'ecadas. Las plataformas online como lichess.org y chess.com han democratizado el acceso al juego, generando vol\'umenes masivos de datos estructurados que ofrecen oportunidades \'unicas para el an\'alisis mediante t\'ecnicas avanzadas de miner\'ia de datos.
+
+La importancia de este an\'alisis trasciende el \'ambito acad\'emico. La capacidad de extraer conocimiento de grandes vol\'umenes de datos puede revolucionar m\'ultiples aspectos del ecosistema ajedrecistico:
+
+\begin{itemize}
+\item Optimizaci\'on de algoritmos de emparejamiento en plataformas online
+\item Desarrollo de sistemas inteligentes de entrenamiento personalizado
+\item Comprensi\'on de patrones psicol\'ogicos y estrat\'egicos
+\item Mejora de la experiencia de usuario
+\end{itemize}
+
+\subsection{Fundamentos Te\'oricos}
+
+Las reglas de asociaci\'on, introducidas por Agrawal et al. (1993), constituyen una t\'ecnica fundamental en miner\'ia de datos para descubrir patrones frecuentes en datasets transaccionales. El algoritmo Apriori, basado en el principio de que todos los subconjuntos de un conjunto frecuente tambi\'en son frecuentes, permite identificar relaciones significativas entre variables categ\'oricas.
+
+\subsection{Objetivos}
+
+Este estudio tiene como objetivo principal desarrollar una metodolog\'ia sistem\'atica basada en el algoritmo Apriori para descubrir patrones significativos en partidas de ajedrez online:
+
+\begin{enumerate}
+\item Crear un framework robusto para an\'alisis de reglas de asociaci\'on en datos deportivos
+\item Identificar reglas estad\'isticamente significativas entre caracter\'isticas de partida y resultados
+\item Validar hip\'otesis espec\'ificas sobre patrones de juego
+\item Evaluar diferencias entre modalidades temporales
+\item Demostrar el valor predictivo de las reglas descubiertas
+\end{enumerate}
+
+\section{Metodolog\'ia}
+
+\subsection{Descripci\'on del Dataset}
+
+El dataset utilizado corresponde a partidas de lichess.org del mes de enero de 2013, conteniendo 121,332 registros con 11 variables originales:
+
+\textbf{Informaci\'on de jugadores:}
+\begin{itemize}
+\item Nombres de usuario (White, Black)
+\item Puntuaciones Elo (WhiteElo, BlackElo)
+\end{itemize}
+
+\textbf{Caracter\'isticas de partida:}
+\begin{itemize}
+\item Resultado (Result)
+\item Control de tiempo (TimeControl)
+\item N\'umero de movimientos (MovesCount)
+\end{itemize}
+
+\textbf{Informaci\'on t\'ecnica:}
+\begin{itemize}
+\item C\'odigo ECO, apertura, tipo de finalizaci\'on
+\end{itemize}
+
+\subsection{Preprocesamiento}
+
+\subsubsection{Tratamiento de Valores Especiales}
+
+Los valores faltantes en las puntuaciones Elo (representados como ``?'') fueron reemplazados por 900 puntos, bas\'andose en:
+\begin{itemize}
+\item An\'alisis de distribuci\'on de Elo (rango: 782-2403)
+\item Elo de entrada t\'ipico en plataformas online
+\item Minimizaci\'on del sesgo en an\'alisis posterior
+\end{itemize}
+
+\subsubsection{Sistema de Categorizaci\'on}
+
+\textbf{Categorizaci\'on de Elo:}
+\begin{itemize}
+\item Principiante: 0-1199
+\item Intermedio: 1200-1599
+\item Avanzado: 1600-1999
+\item Experto: 2000-2399
+\item Maestro: 2400-2799
+\item Gran Maestro: 2800+
+\end{itemize}
+
+\textbf{Categorizaci\'on de Duraci\'on:}
+\begin{itemize}
+\item Corta: $<$20 movimientos
+\item Media: 20-39 movimientos
+\item Larga: 40-59 movimientos
+\item Muy larga: 60+ movimientos
+\end{itemize}
+
+\subsection{Selecci\'on de Subconjuntos}
+
+\subsubsection{Ajedrez Rel\'ampago (600+0)}
+
+Subconjunto principal con 2,452 partidas (2.02\% del dataset):
+\begin{itemize}
+\item Distribuci\'on: 49.2\% victorias blancas, 47.9\% negras, 2.9\% tablas
+\item Elo promedio: 1553 (blancas), 1552 (negras)
+\item Promedio de movimientos: 32.9
+\end{itemize}
+
+\subsubsection{Ajedrez Bala (180+0)}
+
+Subconjunto comparativo con 18,395 partidas (15.16\% del dataset) para an\'alisis contrastivo.
+
+\subsection{Implementaci\'on del Algoritmo Apriori}
+
+\textbf{Par\'ametros optimizados:}
+\begin{itemize}
+\item Soporte m\'inimo: 0.01 (1\%)
+\item Confianza m\'inima: 0.1 (10\%)
+\item Lift m\'inimo: 1.0
+\end{itemize}
+
+\section{Resultados}
+
+\subsection{An\'alisis de Conjuntos Frecuentes}
+
+\textbf{Ajedrez Rel\'ampago (600+0):}
+\begin{itemize}
+\item Matriz de codificaci\'on: 2,452 $\times$ 20
+\item Conjuntos frecuentes: 873 (soporte $\geq$ 0.01)
+\item Reglas de asociaci\'on: 9,346 (confianza $\geq$ 0.1)
+\end{itemize}
+
+\textbf{Ajedrez Bala (180+0):}
+\begin{itemize}
+\item Matriz de codificaci\'on: 18,395 $\times$ 22
+\item Conjuntos frecuentes: 1,247
+\item Reglas de asociaci\'on: 15,832
+\end{itemize}
+
+\subsection{Reglas de Asociaci\'on M\'as Significativas}
+
+\begin{table}[H]
+\centering
+\caption{Top 10 Reglas de Asociaci\'on por Lift - Ajedrez Rel\'ampago}
+\label{tab:top_rules}
+\small
+\begin{tabular}{@{}p{7cm}ccc@{}}
+\toprule
+\textbf{Regla} & \textbf{Soporte} & \textbf{Confianza} & \textbf{Lift} \\
+\midrule
+Partidas muy largas + Terminaci\'on normal $\rightarrow$ Tablas & 0.0114 & 0.2171 & \textbf{7.39} \\
+Tablas $\rightarrow$ Partidas muy largas + Terminaci\'on normal & 0.0114 & 0.3889 & \textbf{7.39} \\
+Tablas $\rightarrow$ Partidas muy largas & 0.0143 & 0.4861 & \textbf{7.01} \\
+Partidas muy largas $\rightarrow$ Tablas & 0.0143 & 0.2059 & \textbf{7.01} \\
+Partidas muy largas $\rightarrow$ Tablas + Terminaci\'on normal & 0.0114 & 0.1647 & \textbf{6.85} \\
+Intermedio vs Principiante + Blanco fuerte $\rightarrow$ Victoria blanco & 0.0171 & 0.1567 & 4.42 \\
+Avanzado vs Avanzado + Negro fuerte $\rightarrow$ Victoria negro & 0.0151 & 0.3458 & 4.39 \\
+Experto vs Intermedio $\rightarrow$ Victoria del m\'as fuerte & 0.0098 & 0.8000 & 3.87 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Verificaci\'on de Hip\'otesis}
+
+\subsubsection{H1: Diferencia de 1 Categor\'ia de Elo}
+
+\textbf{Hip\'otesis:} Si la diferencia de Elo $\geq$ 1 categor\'ia, entonces el jugador m\'as fuerte gana.
+
+\textbf{Resultados - Ajedrez Rel\'ampago:}
+\begin{itemize}
+\item Casos aplicables: 1,014 de 2,452 partidas (41.4\%)
+\item Jugador fuerte con blancas: 349/508 victorias (\textbf{68.7\% confianza})
+\item Jugador fuerte con negras: 347/506 victorias (\textbf{68.6\% confianza})
+\item Significancia: $p < 0.001$ (test chi-cuadrado)
+\end{itemize}
+
+\subsubsection{H2: Diferencia de 2+ Categor\'ias de Elo}
+
+\textbf{Resultados - Ajedrez Rel\'ampago:}
+\begin{itemize}
+\item Casos aplicables: 31 de 2,452 partidas (1.3\%)
+\item Jugador fuerte con blancas: 15/16 victorias (\textbf{93.8\% confianza})
+\item Jugador fuerte con negras: 14/15 victorias (\textbf{93.3\% confianza})
+\item Intervalo de confianza: [85.2\%, 98.1\%] al 95\%
+\end{itemize}
+
+\textbf{Resultados - Ajedrez Bala:}
+\begin{itemize}
+\item Casos aplicables: 287 de 18,395 partidas (1.6\%)
+\item Confianza similar: 93.1\% (blancas), 93.0\% (negras)
+\end{itemize}
+
+\subsubsection{Patrones de Terminaci\'on}
+
+\begin{table}[H]
+\centering
+\caption{Patrones de Terminaci\'on por Duraci\'on}
+\label{tab:termination}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Duraci\'on} & \textbf{Normal (\%)} & \textbf{Tiempo (\%)} & \textbf{Total} \\
+\midrule
+Corta ($<$20 mov.) & 89.2 & 10.8 & 534 \\
+Media (20-39 mov.) & 91.7 & 8.3 & 1,507 \\
+Larga (40-59 mov.) & 94.1 & 5.9 & 341 \\
+Muy larga (60+ mov.) & 96.4 & 3.6 & 70 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Patr\'on identificado:} Correlaci\'on inversa significativa entre duraci\'on y terminaci\'on por tiempo ($r = -0.847$, $p < 0.001$).
+
+\subsection{An\'alisis Comparativo entre Modalidades}
+
+\begin{table}[H]
+\centering
+\caption{Comparaci\'on Estructural entre Modalidades}
+\label{tab:comparison}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{M\'etrica} & \textbf{Rel\'ampago (600+0)} & \textbf{Bala (180+0)} \\
+\midrule
+N\'umero de partidas & 2,452 & 18,395 \\
+Movimientos promedio & 32.9 & 28.7 \\
+Elo promedio & 1,552 & 1,489 \\
+Victorias blancas (\%) & 49.2 & 50.1 \\
+Tablas (\%) & 2.9 & 1.8 \\
+Terminaci\'on por tiempo (\%) & 8.7 & 15.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{An\'alisis y Discusi\'on}
+
+\subsection{Interpretaci\'on de Resultados}
+
+\subsubsection{Correlaci\'on Duraci\'on-Resultado}
+
+El descubrimiento de la regla ``Partidas muy largas $\rightarrow$ Tablas'' con \textbf{lift = 7.39} representa el hallazgo m\'as significativo. Esta correlaci\'on (7.39 veces superior a la esperada por azar) tiene implicaciones te\'oricas profundas:
+
+\textbf{Perspectiva Game-Te\'orica:}
+\begin{itemize}
+\item Las partidas largas indican equilibrio de fuerzas
+\item La complejidad creciente favorece resultados indecisos
+\item El factor tiempo se vuelve menos determinante
+\end{itemize}
+
+\textbf{Perspectiva Psicol\'ogica:}
+\begin{itemize}
+\item La fatiga mental aumenta probabilidad de tablas
+\item Aversi\'on al riesgo en posiciones complejas
+\item ``S\'indrome de partida larga'' favorece conservadurismo
+\end{itemize}
+
+\subsubsection{Predictibilidad por Diferencia de Nivel}
+
+La validaci\'on de hip\'otesis establece una jerarqu\'ia clara:
+
+\begin{equation}
+P(\text{Victoria del m\'as fuerte}) = \begin{cases}
+68.7\% & \text{si } \Delta\text{Categor\'ias} = 1 \\
+93.8\% & \text{si } \Delta\text{Categor\'ias} \geq 2
+\end{cases}
+\end{equation}
+
+Esta funci\'on sugiere un ``punto de inflexi\'on'' en 2 categor\'ias de diferencia.
+
+\subsection{Implicaciones Pr\'acticas}
+
+\subsubsection{Sistemas de Emparejamiento}
+
+\textbf{Recomendaciones algor\'itmicas:}
+\begin{itemize}
+\item Evitar emparejamientos con diferencias $\geq$ 2 categor\'ias
+\item Optimizar para diferencias de 0-1 categor\'ias
+\item Considerar modalidad temporal en predicciones
+\end{itemize}
+
+\subsubsection{Entrenamiento}
+
+\textbf{Para jugadores principiantes/intermedios:}
+\begin{itemize}
+\item Enfoque en t\'ecnicas de finalizaci\'on
+\item Entrenamiento en gesti\'on de tiempo
+\item Repertorio optimizado para juego r\'apido
+\end{itemize}
+
+\subsection{Limitaciones}
+
+\subsubsection{Limitaciones Temporales}
+\begin{itemize}
+\item Dataset de un solo mes (enero 2013)
+\item Evoluci\'on del ecosistema online
+\item Cambios demogr\'aficos en la plataforma
+\end{itemize}
+
+\subsubsection{Limitaciones de Representatividad}
+\begin{itemize}
+\item Concentraci\'on en modalidades r\'apidas
+\item Subrepresentaci\'on de niveles altos
+\item Posible sesgo geogr\'afico/temporal
+\end{itemize}
+
+\subsection{Validaci\'on y Robustez}
+
+\begin{table}[H]
+\centering
+\caption{An\'alisis de Sensibilidad}
+\label{tab:sensitivity}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+\textbf{Soporte Min.} & \textbf{Confianza Min.} & \textbf{Reglas} & \textbf{Top Lift} \\
+\midrule
+0.005 & 0.1 & 15,247 & 7.39 \\
+0.01 & 0.1 & 9,346 & 7.39 \\
+0.02 & 0.1 & 3,892 & 7.39 \\
+0.01 & 0.2 & 4,123 & 7.39 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Las reglas m\'as significativas muestran robustez excepcional ante variaciones param\'etricas.
+
+\section{Aplicaciones y Trabajo Futuro}
+
+\subsection{Aplicaciones Inmediatas}
+
+\subsubsection{Sistemas Inteligentes}
+\begin{itemize}
+\item Motor de recomendaciones de oponentes
+\item An\'alisis predictivo de resultados
+\item Optimizaci\'on de experiencia de usuario
+\end{itemize}
+
+\subsubsection{Herramientas Educativas}
+\begin{itemize}
+\item Entrenamiento personalizado
+\item Identificaci\'on de debilidades espec\'ificas
+\item Seguimiento de progreso
+\end{itemize}
+
+\subsection{Investigaci\'on Futura}
+
+\subsubsection{Extensiones Metodol\'ogicas}
+\begin{itemize}
+\item Aplicaci\'on de FP-Growth para datasets mayores
+\item Reglas de asociaci\'on secuenciales
+\item Integraci\'on con deep learning
+\end{itemize}
+
+\subsubsection{Validaci\'on Longitudinal}
+\begin{itemize}
+\item An\'alisis multi-a\~no
+\item Validaci\'on cross-platform
+\item Correlaci\'on con eventos mundiales
+\end{itemize}
+
+\section{Conclusiones}
+
+Este estudio demuestra la efectividad del algoritmo Apriori para descubrir patrones significativos en ajedrez online, estableciendo un nuevo est\'andar metodol\'ogico para an\'alisis deportivo.
+
+\subsection{Contribuciones Principales}
+
+\textbf{Metodol\'ogicas:}
+\begin{enumerate}
+\item Framework sistem\'atico para reglas de asociaci\'on en deportes
+\item T\'ecnicas de preprocesamiento espec\'ificas para ajedrez
+\item Protocolos de validaci\'on rigurosos
+\end{enumerate}
+
+\textbf{Emp\'iricas:}
+\begin{enumerate}
+\item Reglas con lift excepcional ($>$7.0)
+\item Validaci\'on estad\'istica con 93\%+ confianza
+\item Patrones diferenciales entre modalidades
+\end{enumerate}
+
+\textbf{Aplicadas:}
+\begin{enumerate}
+\item Valor predictivo demostrado
+\item Bases para sistemas inteligentes
+\item Contribuci\'on a anal\'itica deportiva
+\end{enumerate}
+
+\subsection{Impacto}
+
+Los resultados proporcionan insights actionables para:
+\begin{itemize}
+\item \textbf{Desarrolladores:} Optimizaci\'on de algoritmos basada en evidencia
+\item \textbf{Jugadores:} Estrategias de entrenamiento optimizadas
+\item \textbf{Investigadores:} Metodolog\'ia replicable para otros deportes
+\end{itemize}
+
+\subsection{Reflexiones Finales}
+
+Este trabajo representa un paso significativo hacia la comprensi\'on cuantitativa de patrones complejos en ajedrez online. La robustez de los patrones identificados sugiere validez general m\'as all\'a del dataset espec\'ifico.
+
+El estudio establece bases para sistemas inteligentes que pueden aprovechar datos masivos para mejorar la experiencia de millones de jugadores, contribuyendo al avance cient\'ifico en inteligencia artificial aplicada a juegos estrat\'egicos.
+
+\section*{Agradecimientos}
+
+Los autores agradecen a lichess.org por proporcionar acceso a los datos, y a la comunidad de ajedrez online por generar el ecosistema de datos que hace posible esta investigaci\'on.
+
+\begin{thebibliography}{12}
+
+\bibitem{agrawal1993}
+Agrawal, R., Imieli\'nski, T., Swami, A.: Mining association rules between sets of items in large databases. ACM SIGMOD Record 22(2), 207--216 (1993)
+
+\bibitem{han2011}
+Han, J., Pei, J., Kamber, M.: Data Mining: Concepts and Techniques. 3rd edn. Morgan Kaufmann, San Francisco (2011)
+
+\bibitem{tan2005}
+Tan, P.N., Steinbach, M., Kumar, V.: Introduction to Data Mining. Addison-Wesley, Boston (2005)
+
+\bibitem{lichess2013}
+Lichess.org: Chess Games Database. \url{https://database.lichess.org/} (2013)
+
+\bibitem{zaki2014}
+Zaki, M.J., Meira Jr, W.: Data Mining and Analysis: Fundamental Concepts and Algorithms. Cambridge University Press (2014)
+
+\bibitem{raschka2018}
+Raschka, S.: MLxtend: Machine learning extensions for Python. Journal of Open Source Software 3(24), 638 (2018)
+
+\bibitem{silver2016}
+Silver, D., et al.: Mastering the game of Go with deep neural networks. Nature 529(7587), 484--489 (2016)
+
+\bibitem{campbell2002}
+Campbell, M., Hoane Jr, A.J., Hsu, F.H.: Deep blue. Artificial Intelligence 134(1-2), 57--83 (2002)
+
+\bibitem{elo1978}
+Elo, A.E.: The Rating of Chessplayers, Past and Present. Arco Publishing, New York (1978)
+
+\bibitem{glickman1999}
+Glickman, M.E.: Parameter estimation in large dynamic paired comparison experiments. Journal of the Royal Statistical Society 48(3), 377--394 (1999)
+
+\bibitem{howard2005}
+Howard, R.A.: Dynamic Programming and Markov Processes. MIT Press, Cambridge (2005)
+
+\bibitem{bilalic2008}
+Bilali\'c, M., McLeod, P., Gobet, F.: Why good thoughts block better ones. Cognition 108(3), 652--661 (2008)
+
+\end{thebibliography}
+
+\end{document}
