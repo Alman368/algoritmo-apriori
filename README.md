@@ -195,8 +195,8 @@ pip install pandas numpy scikit-learn mlxtend matplotlib seaborn jupyter
 
 ## 👥 Autores
 
-- **Mario Marín Hinojosa** - Universidad Complutense de Madrid
-- **Alberto Bartolomé Iruela** - Universidad Complutense de Madrid
+- **Mario Marín Hinojosa** - Universidad de Málaga
+- **Alberto Bartolomé Iruela** - Universidad de Málaga
 
 ---
 
