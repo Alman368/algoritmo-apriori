@@ -221,4 +221,5 @@ Este proyecto es de uso académico. Todos los análisis, interpretaciones y conc
 - **Universidad de Málaga** por el apoyo académico
 
 ---
-
+## Nota
+- El video no se podrá visualizar directamente desde la plataforma de github (ya que github no permite mostrar archivos tan grandes), se debe clonar el repositorio para poder visualizarlo.
