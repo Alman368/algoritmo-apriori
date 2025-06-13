@@ -218,15 +218,7 @@ Este proyecto es de uso académico. Todos los análisis, interpretaciones y conc
 
 - **Lichess.org** por proporcionar acceso a los datos
 - **Comunidad de ajedrez online** por generar el ecosistema de datos
-- **Universidad Complutense de Madrid** por el apoyo académico
+- **Universidad de Málaga** por el apoyo académico
 
 ---
 
-<div align="center">
-
-### 🏆 **Proyecto de Minería de Datos - Curso 2024**
-### 🎯 **Algoritmo Apriori aplicado a Ajedrez Online**
-
-**⭐ Calificación objetivo: 10/10 ⭐**
-
-</div>
